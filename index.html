@@ -1,186 +1,33 @@
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Suraj AI Assistant</title>
+  <title>Suraj AI - 3D Model</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #ff9933, white, #138808);
+      font-family: sans-serif;
+      background: linear-gradient(to bottom, #002060, #000000);
       color: white;
-      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
-    .container {
-      text-align: center;
-      padding: 20px;
+    model-viewer {
+      width: 300px;
+      height: 400px;
     }
-    .avatar {
-      height: 300px;
-      margin: 20px auto;
-    }
-    .buttons, .memory-section {
-      margin-top: 20px;
-    }
-    button {
-      padding: 12px 20px;
-      margin: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #1e90ff;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #3ca9ff;
-    }
-    #insta {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 16px;
-    }
-    #settings {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 24px;
-      cursor: pointer;
-    }
-    #settingsPanel {
-      display: none;
-      position: absolute;
-      top: 50px;
-      right: 10px;
-      background: rgba(0,0,0,0.8);
-      padding: 10px;
-      border-radius: 10px;
-      color: white;
-    }
-    .history-box {
-      max-height: 200px;
-      overflow-y: auto;
-      background: rgba(0,0,0,0.3);
-      margin: 10px auto;
-      padding: 10px;
-      border-radius: 10px;
+    h1 {
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
-  <div id="settings">⚙️</div>
-  <div id="settingsPanel">
-    <label><input type="checkbox" id="voiceOut" checked> Voice Output</label><br>
-    <label><input type="checkbox" id="voiceIn" checked> Voice Input</label><br>
-    <label><input type="checkbox" id="autoLang" checked> Auto Language</label><br>
-    <label><input type="checkbox" id="funnyMode"> Funny Mode</label><br>
-    <label><input type="checkbox" id="motivationMode"> Motivational Mode</label><br>
-    <label><input type="checkbox" id="locMode"> Location Response</label>
-  </div>
-  <div class="container">
-    <h1>☀️ SUR🧠J</h1>
-    <img src="https://cdn.pixabay.com/photo/2016/11/29/10/08/avatar-1869057_1280.png" class="avatar" alt="3D Avatar">
-    <div class="buttons">
-      <button onclick="startListening()">🎤 Speak</button>
-      <button onclick="searchQuery()">🔍 Search</button>
-      <button onclick="toggleMemory()">💾 Enable Memory</button>
-    </div>
-    <div class="memory-section">
-      <h3>🧠 Chat Memory</h3>
-      <div class="history-box" id="chatHistory"></div>
-    </div>
-  </div>
-  <div id="insta">
-    <a href="https://instagram.com/mr_suraj_roy__" target="_blank" style="color:white; text-decoration:none;">@mr_suraj_roy__</a>
-  </div>
-
-  <script>
-    const synth = window.speechSynthesis;
-    const memory = [];
-    let memoryEnabled = false;
-
-    document.getElementById("settings").onclick = () => {
-      const panel = document.getElementById("settingsPanel");
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    };
-
-    function speak(text) {
-      if (!document.getElementById("voiceOut").checked) return;
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = 'hi-IN';
-      if (document.getElementById("funnyMode").checked) utter.pitch = 2;
-      synth.speak(utter);
-    }
-
-    function startListening() {
-      if (!document.getElementById("voiceIn").checked) return;
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = 'hi-IN';
-      recognition.start();
-
-      recognition.onresult = function(event) {
-        const result = event.results[0][0].transcript;
-        speak("आपने कहा: " + result);
-        callChatGPT(result);
-      };
-
-      recognition.onerror = function(event) {
-        speak("माफ कीजिए, मैं सुन नहीं पाया");
-      }
-    }
-
-    function callChatGPT(prompt) {
-      fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer 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"
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { role: "user", content: prompt }
-          ]
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        const reply = data.choices[0].message.content;
-        speak(reply);
-        if (memoryEnabled) {
-          memory.push({ q: prompt, a: reply });
-          updateMemory();
-        }
-      })
-      .catch(err => {
-        speak("उत्तर प्राप्त करने में त्रुटि हुई।");
-      });
-    }
-
-    function updateMemory() {
-      const container = document.getElementById("chatHistory");
-      container.innerHTML = memory.map(m => `<b>आप:</b> ${m.q}<br><b>सूरज:</b> ${m.a}<hr>`).join('');
-    }
-
-    function toggleMemory() {
-      const confirmMemory = confirm("क्या आप चाहते हैं कि मैं आपकी बातें याद रखूँ?");
-      memoryEnabled = confirmMemory;
-      if (confirmMemory) {
-        speak("ठीक है, अब से आपकी बातें याद रखूंगा");
-      } else {
-        speak("ठीक है, याद नहीं रखूंगा");
-      }
-    }
-
-    function searchQuery() {
-      const query = prompt("क्या सर्च करना है?");
-      if (query) {
-        window.open("https://www.google.com/search?q=" + encodeURIComponent(query), "_blank");
-      }
-    }
-  </script>
+  <h1>🙏 नमस्ते! मैं Suraj AI हूँ</h1>
+  <model-viewer src="3d_model.glb" alt="3D Suraj AI Avatar" auto-rotate camera-controls background-color="#FFFFFF"></model-viewer>
 </body>
 </html>
